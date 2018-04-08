@@ -383,6 +383,7 @@ cache_bwrite (struct bfd *abfd, const void *from, file_ptr nbytes)
 
   if (f == NULL)
     return 0;
+  // nwrite = _fwrite_nolock (from, 1, nbytes, f);
   nwrite = fwrite (from, 1, nbytes, f);
   if (nwrite < nbytes && ferror (f))
     {

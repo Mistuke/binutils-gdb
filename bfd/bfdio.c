@@ -48,7 +48,7 @@ _bfd_real_ftell (FILE *file)
 #elif defined (HAVE_FTELLO)
   return ftello (file);
 #else
-  return ftell (file);
+  return _ftell_nolock (file);
 #endif
 }
 
@@ -60,7 +60,7 @@ _bfd_real_fseek (FILE *file, file_ptr offset, int whence)
 #elif defined (HAVE_FSEEKO)
   return fseeko (file, offset, whence);
 #else
-  return fseek (file, offset, whence);
+  return _fseek_nolock (file, offset, whence);
 #endif
 }
 
@@ -78,12 +78,27 @@ close_on_exec (FILE *file)
 	fcntl (fd, F_SETFD, old | FD_CLOEXEC);
     }
 #endif
+  if (file)
+    setvbuf (file, NULL, _IOFBF, 32 * 1024);
+
   return file;
 }
 
-FILE *
-_bfd_real_fopen (const char *filename, const char *modes)
+static char* make_extra(const char* modes)
 {
+  int n = strlen (modes);
+  char* new_modes = malloc ((n + 2) * sizeof(char));
+  if (strchr(modes, "w") != NULL)
+    sprintf (new_modes, "%sR", modes);
+  else
+    sprintf (new_modes, "%sS", modes);
+  return new_modes;
+}
+
+FILE *
+_bfd_real_fopen (const char *filename, const char *old_modes)
+{
+char* modes = make_extra (old_modes);
 #ifdef VMS
   char *vms_attr;
 
