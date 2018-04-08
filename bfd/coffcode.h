@@ -356,6 +356,11 @@ CODE_FRAGMENT
 #include "coffswap.h"
 #endif
 
+#ifdef _USE_NATIVE_PE_CHECKSUM
+#include <windows.h>
+#include <stdint.h>
+#endif
+
 #define STRING_SIZE_SIZE 4
 
 #define DOT_DEBUG	".debug"
@@ -3299,12 +3304,108 @@ coff_compute_checksum (bfd *abfd)
   return (0xffff & (total + (total >> 0x10)));
 }
 
+#ifdef _USE_NATIVE_PE_CHECKSUM
+static unsigned short
+chkSum (unsigned int checkSum, void *fileBase, int length)
+{
+
+    int *data;
+    int sum;
+
+    if ( length && fileBase != NULL)
+    {
+        data = (int *)fileBase;
+        do
+        {
+            sum = *(unsigned short *)data + checkSum;
+            data = (int *)((char *)data + 2);
+            checkSum = (unsigned short)sum + (sum >> 16);
+        }
+        while ( --length );
+    }
+
+    return checkSum + (checkSum >> 16);
+}
+
+static unsigned int
+peCheckSum (void *fileBase, unsigned int fileSize)
+{
+
+    void *remainData;
+    int remainDataSize;
+    unsigned int peHeaderSize;
+    unsigned int headerCheckSum;
+    unsigned int peHeaderCheckSum;
+    unsigned int fileCheckSum;
+    PIMAGE_NT_HEADERS ntHeaders;
+
+    ntHeaders = ImageNtHeader (fileBase);
+    if ( ntHeaders )
+    {
+        headerCheckSum = ntHeaders->OptionalHeader.CheckSum;
+        peHeaderSize = (unsigned int)ntHeaders
+                     - (unsigned int)fileBase
+                     + ((unsigned int)&ntHeaders->OptionalHeader.CheckSum
+                        - (unsigned int)ntHeaders);
+        remainDataSize   = (fileSize - peHeaderSize - 4) >> 1;
+        remainData       = &ntHeaders->OptionalHeader.Subsystem;
+        peHeaderCheckSum = chkSum (0, fileBase, peHeaderSize >> 1);
+        fileCheckSum     = chkSum (peHeaderCheckSum, remainData, remainDataSize);
+
+        if ( fileSize & 1 )
+          fileCheckSum += (unsigned short)*((char *)fileBase + fileSize - 1);
+    }
+    else
+      fileCheckSum = 0;
+
+    return (fileSize + fileCheckSum);
+}
+
+static uint32_t
+generate_pe_checksum (char* fileName)
+{
+    uint32_t checkSum = 0;
+    HANDLE fileHandle =
+      CreateFile (fileName, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                  NULL, OPEN_EXISTING, 0, NULL);
+
+    if (fileHandle != INVALID_HANDLE_VALUE)
+    {
+        HANDLE fileMapHandle =
+          CreateFileMapping (fileHandle, NULL,
+                             PAGE_READONLY | SEC_IMAGE_NO_EXECUTE, 0, 0, NULL);
+        if (fileMapHandle != NULL)
+        {
+            unsigned short *fileBase = (unsigned short *)
+              MapViewOfFile(fileMapHandle,FILE_MAP_READ, 0, 0, 0);
+            if (fileBase != NULL)
+            {
+                uint32_t fileSize = GetFileSize (fileHandle, NULL);
+                checkSum = peCheckSum (fileBase, fileSize);
+                UnmapViewOfFile(fileBase);
+            }
+
+            CloseHandle(fileMapHandle);
+        }
+
+        CloseHandle(fileHandle);
+    }
+
+    return checkSum;
+}
+#endif
+
 static bfd_boolean
 coff_apply_checksum (bfd *abfd)
 {
   unsigned int computed;
   unsigned int checksum = 0;
 
+  /* Checksums are only checked by critical DLLs and drivers.  So disable it
+     for normal executables by default. */
+  //return TRUE;
+
+#ifndef _USE_NATIVE_PE_CHECKSUM
   if (bfd_seek (abfd, 0x3c, SEEK_SET) != 0)
     return FALSE;
 
@@ -3323,6 +3424,9 @@ coff_apply_checksum (bfd *abfd)
   computed = coff_compute_checksum (abfd);
 
   checksum = computed + pelength;
+#else
+  checksum = generate_pe_checksum (abfd->filename);
+#endif
 
   if (bfd_seek (abfd, peheader + 0x58, SEEK_SET) != 0)
     return FALSE;

@@ -109,11 +109,11 @@ struct internal_filehdr
 #define F_GO32STUB      (0x4000)
 
 /* Extra structure which is used in the optional header.  */
-typedef struct _IMAGE_DATA_DIRECTORY
+typedef struct _internal_IMAGE_DATA_DIRECTORY
 {
   bfd_vma VirtualAddress;
   long    Size;
-}  IMAGE_DATA_DIRECTORY;
+}  internal_IMAGE_DATA_DIRECTORY;
 #define PE_EXPORT_TABLE			0
 #define PE_IMPORT_TABLE			1
 #define PE_RESOURCE_TABLE		2
@@ -242,7 +242,7 @@ struct internal_extra_pe_aouthdr
   bfd_vma SizeOfHeapCommit;	/*  commit, don't know what to defaut it to.  */
   long    LoaderFlags;		/* Can probably set to 0.  */
   long    NumberOfRvaAndSizes;	/* Number of entries in next entry, 16.  */
-  IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
+  internal_IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
 };
 
 /********************** AOUT "OPTIONAL HEADER" **********************/
@@ -482,7 +482,7 @@ struct internal_syment
   unsigned char n_numaux;	/* number of aux. entries	*/
 };
 
-#define n_name		_n._n_name
+//#define n_name		_n._n_name
 #define n_zeroes	_n._n_n._n_zeroes
 #define n_offset	_n._n_n._n_offset
 

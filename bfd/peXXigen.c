@@ -633,7 +633,7 @@ _bfd_XXi_swap_aouthdr_out (bfd * abfd, void * in, void * out)
   struct internal_extra_pe_aouthdr *extra = &pe->pe_opthdr;
   PEAOUTHDR *aouthdr_out = (PEAOUTHDR *) out;
   bfd_vma sa, fa, ib;
-  IMAGE_DATA_DIRECTORY idata2, idata5, tls;
+  internal_IMAGE_DATA_DIRECTORY idata2, idata5, tls;
 
   sa = extra->SectionAlignment;
   fa = extra->FileAlignment;
