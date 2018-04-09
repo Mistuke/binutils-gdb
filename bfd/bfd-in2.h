@@ -375,6 +375,8 @@ struct bfd_hash_entry
   struct bfd_hash_entry *next;
   /* String being hashed.  */
   const char *string;
+  /* The length of the string.  */
+  unsigned int len;
   /* Hash code.  This is the full hash code, not the index into the
      table.  */
   unsigned long hash;
@@ -438,7 +440,7 @@ extern struct bfd_hash_entry *bfd_hash_lookup
 
 /* Insert an entry in a hash table.  */
 extern struct bfd_hash_entry *bfd_hash_insert
-  (struct bfd_hash_table *, const char *, unsigned long);
+  (struct bfd_hash_table *, const char *, unsigned long, unsigned int);
 
 /* Rename an entry in a hash table.  */
 extern void bfd_hash_rename

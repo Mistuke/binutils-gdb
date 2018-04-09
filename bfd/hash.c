@@ -472,7 +472,8 @@ bfd_hash_lookup (struct bfd_hash_table *table,
        hashp = hashp->next)
     {
       if (hashp->hash == hash
-	  && strcmp (hashp->string, string) == 0)
+	  && hashp->len == len
+	  && memcmp (hashp->string, string, len) == 0)
 	return hashp;
     }
 
@@ -494,7 +495,7 @@ bfd_hash_lookup (struct bfd_hash_table *table,
       string = new_string;
     }
 
-  return bfd_hash_insert (table, string, hash);
+  return bfd_hash_insert (table, string, hash, len);
 }
 
 /* Insert an entry in a hash table.  */
@@ -502,7 +503,8 @@ bfd_hash_lookup (struct bfd_hash_table *table,
 struct bfd_hash_entry *
 bfd_hash_insert (struct bfd_hash_table *table,
 		 const char *string,
-		 unsigned long hash)
+		 unsigned long hash,
+		 unsigned int len)
 {
   struct bfd_hash_entry *hashp;
   unsigned int _index;
@@ -512,6 +514,7 @@ bfd_hash_insert (struct bfd_hash_table *table,
     return NULL;
   hashp->string = string;
   hashp->hash = hash;
+  hashp->len = len;
   _index = hash % table->size;
   hashp->next = table->table[_index];
   table->table[_index] = hashp;

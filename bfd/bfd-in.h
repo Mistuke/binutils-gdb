@@ -431,7 +431,7 @@ extern struct bfd_hash_entry *bfd_hash_lookup
 
 /* Insert an entry in a hash table.  */
 extern struct bfd_hash_entry *bfd_hash_insert
-  (struct bfd_hash_table *, const char *, unsigned long);
+  (struct bfd_hash_table *, const char *, unsigned long, unsigned int);
 
 /* Rename an entry in a hash table.  */
 extern void bfd_hash_rename

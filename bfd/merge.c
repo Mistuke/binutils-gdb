@@ -222,7 +222,7 @@ sec_merge_hash_lookup (struct sec_merge_hash *table, const char *string,
     return NULL;
 
   hashp = ((struct sec_merge_hash_entry *)
-	   bfd_hash_insert (&table->table, string, hash));
+	   bfd_hash_insert (&table->table, string, hash, len));
   if (hashp == NULL)
     return NULL;
   hashp->len = len;

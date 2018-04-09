@@ -48,7 +48,7 @@ _bfd_real_ftell (FILE *file)
 #elif defined (HAVE_FTELLO)
   return ftello (file);
 #else
-  return _ftell_nolock (file);
+  return _ftell (file);
 #endif
 }
 
@@ -60,7 +60,7 @@ _bfd_real_fseek (FILE *file, file_ptr offset, int whence)
 #elif defined (HAVE_FSEEKO)
   return fseeko (file, offset, whence);
 #else
-  return _fseek_nolock (file, offset, whence);
+  return _fseek (file, offset, whence);
 #endif
 }
 
@@ -79,7 +79,7 @@ close_on_exec (FILE *file)
     }
 #endif
   if (file)
-    setvbuf (file, NULL, _IOFBF, 32 * 1024);
+    setvbuf (file, NULL, _IOFBF, 16 * 1024);
 
   return file;
 }
